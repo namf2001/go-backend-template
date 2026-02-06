@@ -3,8 +3,8 @@
 ## Mục Tiêu
 - Implement business logic layer (Controller)
 - Tạo REST API handlers
-- Setup HTTP router và middleware
-- Tạo main application
+- Setup HTTP router và middleware theo kiến trúc scalable
+- Tạo main application với graceful shutdown
 
 ---
 
@@ -352,7 +352,7 @@ EOF
 
 ---
 
-## Bước 4: Setup Router
+## Bước 4: Setup Scalable Router
 
 ### File: `cmd/server/router.go`
 
@@ -361,16 +361,26 @@ cat > cmd/server/router.go << 'EOF'
 package main
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/yourusername/go-backend-template/config"
 	usershandler "github.com/yourusername/go-backend-template/internal/handler/rest/v1/users"
 )
 
-func setupRouter(usersHandler *usershandler.Handler) http.Handler {
+// router defines the routes & handlers of the app
+type router struct {
+	ctx          context.Context
+	cfg          *config.Config
+	usersHandler *usershandler.Handler
+}
+
+// handler returns the handler for use by the server
+func (rtr router) handler() http.Handler {
 	r := chi.NewRouter()
 
 	// Middleware
@@ -390,30 +400,42 @@ func setupRouter(usersHandler *usershandler.Handler) http.Handler {
 		MaxAge:           300,
 	}))
 
+	// Register routes
+	rtr.routes(r)
+
+	return r
+}
+
+func (rtr router) routes(r chi.Router) {
+	r.Group(rtr.public)
+	r.Group(rtr.apiV1)
+}
+
+func (rtr router) public(r chi.Router) {
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+}
 
-	// API routes
+func (rtr router) apiV1(r chi.Router) {
 	r.Route("/api/v1", func(r chi.Router) {
-		// Users routes
-		r.Post("/users", usersHandler.CreateUser)
-		r.Get("/users", usersHandler.ListUsers)
-		r.Get("/users/{id}", usersHandler.GetUser)
-		r.Put("/users/{id}", usersHandler.UpdateUser)
-		r.Delete("/users/{id}", usersHandler.DeleteUser)
+		r.Route("/users", func(r chi.Router) {
+			r.Post("/", rtr.usersHandler.CreateUser)
+			r.Get("/", rtr.usersHandler.ListUsers)
+			r.Get("/{id}", rtr.usersHandler.GetUser)
+			r.Put("/{id}", rtr.usersHandler.UpdateUser)
+			r.Delete("/{id}", rtr.usersHandler.DeleteUser)
+		})
 	})
-
-	return r
 }
 EOF
 ```
 
 ---
 
-## Bước 5: Create Main Application
+## Bước 5: Create Main Application with Graceful Shutdown
 
 ### File: `cmd/server/main.go`
 
@@ -422,9 +444,14 @@ cat > cmd/server/main.go << 'EOF'
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/yourusername/go-backend-template/config"
 	userscontroller "github.com/yourusername/go-backend-template/internal/controller/users"
@@ -434,12 +461,20 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	if err := run(ctx, cfg); err != nil {
+		log.Fatalf("Application error: %v", err)
+	}
+}
+
+func run(ctx context.Context, cfg *config.Config) error {
 	// Connect to database
 	dbCfg := database.Config{
 		Host:         cfg.Database.Host,
@@ -454,7 +489,7 @@ func main() {
 
 	db, err := database.NewPostgresConnection(dbCfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	defer db.Close()
 
@@ -470,18 +505,49 @@ func main() {
 	usersHandler := usershandler.New(usersController)
 
 	// Setup router
-	router := setupRouter(usersHandler)
+	rtr := router{
+		ctx:          ctx,
+		cfg:          cfg,
+		usersHandler: usersHandler,
+	}
 
 	// Start server
 	addr := fmt.Sprintf(":%s", cfg.Server.Port)
+	srv := &http.Server{
+		Addr:         addr,
+		Handler:      rtr.handler(),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
 	log.Printf("🚀 Server starting on %s", addr)
 	log.Printf("📝 Environment: %s", cfg.Server.Env)
 	log.Printf("🔗 Health check: http://localhost%s/health", addr)
-	log.Printf("🔗 API base URL: http://localhost%s/api/v1", addr)
+	log.Printf("🔗 API base URL: http://localhost%s/api/v1/users", addr)
 
-	if err := http.ListenAndServe(addr, router); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+	// Graceful shutdown channel
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	<-done
+	log.Println("Server stopping...")
+
+	// Create a deadline to wait for currently active operations to finish
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctxShutdown); err != nil {
+		return fmt.Errorf("server shutdown failed: %w", err)
 	}
+
+	log.Println("Server exited properly")
+	return nil
 }
 EOF
 ```
@@ -521,8 +587,8 @@ make run
 
 ✅ Controller layer đã được implement  
 ✅ REST handlers đã sẵn sàng  
-✅ Router với middleware đã được setup  
-✅ Main application có thể chạy  
+✅ Router scalable với struct method grouping  
+✅ Main application có graceful shutdown  
 
 ---
 
