@@ -29,6 +29,7 @@ func (i impl) GetByEmail(ctx context.Context, email string) (model.User, error) 
 	if err == sql.ErrNoRows {
 		return model.User{}, apperrors.NotFound("user not found")
 	}
+
 	if err != nil {
 		return model.User{}, errors.Wrap(err, "failed to get user by email")
 	}

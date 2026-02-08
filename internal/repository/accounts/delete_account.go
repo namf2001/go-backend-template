@@ -1,4 +1,4 @@
-package users
+package accounts
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Delete deletes a user by ID.
+// Delete deletes an account by ID
 func (i impl) Delete(ctx context.Context, id int64) error {
-	query := `DELETE FROM users WHERE id = $1`
+	query := `DELETE FROM accounts WHERE id = $1`
 
 	result, err := i.db.ExecContext(ctx, query, id)
 	if err != nil {
@@ -22,7 +22,7 @@ func (i impl) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return apperrors.NotFound("user not found")
+		return apperrors.NotFound("account not found")
 	}
 
 	return nil

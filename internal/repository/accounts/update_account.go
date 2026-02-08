@@ -1,4 +1,4 @@
-package users
+package accounts
 
 import (
 	"context"
@@ -8,21 +8,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Update implements Repository.
-func (i impl) Update(ctx context.Context, user model.User) error {
+// Update updates an account.
+func (i impl) Update(ctx context.Context, account model.Account) error {
 	query := `
-		UPDATE users
-		SET email = $1, name = $2
-		WHERE id = $3
+	UPDATE accounts
+	SET username = $1, password = $2, updated_at = NOW()
+	WHERE id = $3
 	`
 
-	result, err := i.db.ExecContext(ctx, query, user.Email, user.Name, user.ID)
+	result, err := i.db.ExecContext(ctx, query,
+		account.Username,
+		account.Password,
+		account.ID,
+	)
 	if err != nil {
 		if err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"" ||
 			err.Error() == "UNIQUE constraint failed" {
-			return apperrors.AlreadyExists("user with this email already exists")
+			return apperrors.AlreadyExists("account with this username already exists")
 		}
-		return errors.Wrap(err, "failed to update user")
+		return errors.Wrap(err, "failed to update account")
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -31,8 +35,9 @@ func (i impl) Update(ctx context.Context, user model.User) error {
 	}
 
 	if rowsAffected == 0 {
-		return apperrors.NotFound("user not found")
+		return apperrors.NotFound("account not found")
 	}
 
 	return nil
+
 }

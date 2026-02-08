@@ -80,15 +80,23 @@ Trong phase này bạn sẽ:
 
 ### [Phase 5: Testing & Verification](phases/phase5-testing.md)
 **Thời gian:** ~45 phút
+Testing và verify toàn bộ hệ thống.
 
-Trong phase này bạn sẽ:
-- Test tất cả API endpoints
-- Verify error handling
-- Test edge cases
-- Tạo test scripts
-- Verify database operations
+---
 
-**Kết quả:** Application đã được test đầy đủ và sẵn sàng sử dụng
+## 🚀 Advanced Phases (Next Steps)
+
+### [Phase 6: Authentication (JWT)](phases/phase6-authentication.md)
+Implement xác thực người dùng bằng JWT và bảo vệ API routes.
+
+### [Phase 7: Observability](phases/phase7-observability.md)
+Tích hợp Structured Logging (Zap) và Prometheus Metrics.
+
+### [Phase 8: API Documentation](phases/phase8-swagger.md)
+Tự động tạo document Swagger từ code comments.
+
+### [Phase 9: Deployment](phases/phase9-deployment.md)
+Tối ưu hóa Dockerfile và setup CI flow.
 
 ---
 

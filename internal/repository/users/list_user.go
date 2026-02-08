@@ -12,6 +12,7 @@ import (
 type ListFilters struct {
 	Limit  int
 	Offset int
+	Order  string
 	Email  string
 }
 
@@ -33,7 +34,12 @@ func (i impl) List(ctx context.Context, filters ListFilters) ([]model.User, erro
 	}
 
 	// Add ordering
-	query += ` ORDER BY created_at DESC`
+	query += ` ORDER BY created_at `
+	if filters.Order == "asc" {
+		query += `ASC`
+	} else {
+		query += `DESC`
+	}
 
 	// Add pagination
 	if filters.Limit > 0 {
