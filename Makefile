@@ -1,5 +1,5 @@
 # Makefile
-.PHONY: all build build-all run run-race clean test test-coverage deps lint fmt vet generate audit docker-build docker-up docker-down migrate-up migrate-down help
+.PHONY: all build build-all run run-race clean clear test test-coverage deps lint fmt vet generate audit docker-build docker-up docker-down migrate-up migrate-down help
 
 # Variables
 BINARY_NAME=api
@@ -30,6 +30,10 @@ clean: ## Clean build artifacts
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 	@rm -f coverage.out
+
+clear: clean ## Clear build artifacts and Go caches
+	@echo "Clearing Go caches..."
+	$(GO) clean -cache -testcache -modcache
 
 test: ## Run tests
 	@echo "Running tests..."
