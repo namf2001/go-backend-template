@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/namf2001/go-backend-template/config"
+	authhandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/auth"
 	usershandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/users"
 )
 
@@ -17,6 +18,7 @@ type router struct {
 	ctx          context.Context
 	cfg          *config.Config
 	usersHandler *usershandler.Handler
+	authHandler  *authhandler.Handler
 }
 
 // handler returns the handler for use by the server
@@ -66,6 +68,13 @@ func (rtr router) apiV1(r chi.Router) {
 			r.Get("/{id}", rtr.usersHandler.GetUser)
 			r.Put("/{id}", rtr.usersHandler.UpdateUser)
 			r.Delete("/{id}", rtr.usersHandler.DeleteUser)
+		})
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/login", rtr.authHandler.Login)
+			r.Post("/register", rtr.authHandler.Register)
+			r.Get("/google/login", rtr.authHandler.GoogleLogin)
+			r.Get("/google/callback", rtr.authHandler.GoogleCallback)
 		})
 	})
 }

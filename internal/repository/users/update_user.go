@@ -12,11 +12,11 @@ import (
 func (i impl) Update(ctx context.Context, user model.User) error {
 	query := `
 		UPDATE users
-		SET email = $1, name = $2
-		WHERE id = $3
+		SET email = $1, name = $2, password = $3, image = $4, "emailVerified" = $5
+		WHERE id = $6
 	`
 
-	result, err := i.db.ExecContext(ctx, query, user.Email, user.Name, user.ID)
+	result, err := i.db.ExecContext(ctx, query, user.Email, user.Name, user.Password, user.Image, user.EmailVerified, user.ID)
 	if err != nil {
 		if err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"" ||
 			err.Error() == "UNIQUE constraint failed" {

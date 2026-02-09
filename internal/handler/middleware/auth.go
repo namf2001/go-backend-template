@@ -16,7 +16,7 @@ type contextKey string
 const contextKeyUserID contextKey = "userID"
 
 // RequireAuth middleware verifies JWT token
-func RequireAuth(secretKey string) func(http.Handler) http.Handler {
+func RequireAuth() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -32,7 +32,7 @@ func RequireAuth(secretKey string) func(http.Handler) http.Handler {
 			}
 
 			tokenString := headerParts[1]
-			claims, err := jwt.ParseToken(tokenString, secretKey)
+			claims, err := jwt.ParseToken(tokenString)
 			if err != nil {
 				response.Error(w, errors.Wrap(apperrors.ErrUnauthorized, "invalid or expired token"))
 				return

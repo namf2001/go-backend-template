@@ -7,32 +7,45 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Create creates a new account.
+// Create implements Repository.
 func (i impl) Create(ctx context.Context, account model.Account) (model.Account, error) {
 	query := `
-		INSERT INTO accounts (userID, username, password, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id
+		INSERT INTO accounts ("userId", type, provider, "providerAccountId", refresh_token, access_token, expires_at, id_token, scope, session_state, token_type)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING id, "userId", type, provider, "providerAccountId", refresh_token, access_token, expires_at, id_token, scope, session_state, token_type
 	`
 
-	err := i.db.QueryRowContext(
-		ctx,
-		query,
+	var created model.Account
+	err := i.db.QueryRowContext(ctx, query,
 		account.UserID,
-		account.Username,
-		account.Password,
-		account.CreatedAt,
-		account.UpdatedAt,
-	).Scan(&account.ID)
+		account.Type,
+		account.Provider,
+		account.ProviderAccountID,
+		account.RefreshToken,
+		account.AccessToken,
+		account.ExpiresAt,
+		account.IDToken,
+		account.Scope,
+		account.SessionState,
+		account.TokenType,
+	).Scan(
+		&created.ID,
+		&created.UserID,
+		&created.Type,
+		&created.Provider,
+		&created.ProviderAccountID,
+		&created.RefreshToken,
+		&created.AccessToken,
+		&created.ExpiresAt,
+		&created.IDToken,
+		&created.Scope,
+		&created.SessionState,
+		&created.TokenType,
+	)
+
 	if err != nil {
-		if err.Error() == "pq: duplicate key value violates unique constraint \"accounts_username_key\"" ||
-			err.Error() == "UNIQUE constraint failed" {
-
-			return model.Account{}, errors.New("account with this username already exists")
-		}
-
-		return model.Account{}, errors.Wrap(err, "failed to create user")
+		return model.Account{}, errors.Wrap(err, "failed to create account")
 	}
 
-	return account, nil
+	return created, nil
 }

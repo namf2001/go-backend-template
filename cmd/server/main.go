@@ -11,9 +11,13 @@ import (
 	"time"
 
 	"github.com/namf2001/go-backend-template/config"
+	authcontroller "github.com/namf2001/go-backend-template/internal/controller/auth"
 	userscontroller "github.com/namf2001/go-backend-template/internal/controller/users"
+	authhandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/auth"
 	usershandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/users"
 	"github.com/namf2001/go-backend-template/internal/pkg/database"
+	"github.com/namf2001/go-backend-template/internal/pkg/jwt"
+	"github.com/namf2001/go-backend-template/internal/pkg/oauth"
 	"github.com/namf2001/go-backend-template/internal/repository"
 )
 
@@ -52,20 +56,29 @@ func run(ctx context.Context, cfg *config.Config) error {
 
 	log.Println("✓ Database connected successfully")
 
+	// Initialize OAuth
+	oauth.Init(cfg.Google)
+
+	// Initialize JWT
+	jwt.Init(cfg.JWT.Secret, 24*time.Hour)
+
 	// Initialize repository
 	repo := repository.New(db)
 
 	// Initialize controllers
 	usersController := userscontroller.New(repo)
+	authController := authcontroller.New(repo)
 
 	// Initialize handlers
 	usersHandler := usershandler.New(usersController)
+	authHandler := authhandler.New(authController)
 
 	// Setup router
 	rtr := router{
 		ctx:          ctx,
 		cfg:          cfg,
 		usersHandler: usersHandler,
+		authHandler:  authHandler,
 	}
 
 	// Start server

@@ -13,6 +13,7 @@ var (
 	ErrInternal      = errors.New("internal server error")
 	ErrUnauthorized  = errors.New("unauthorized")
 	ErrForbidden     = errors.New("forbidden")
+	ErrConflict      = errors.New("resource conflict")
 )
 
 // AppError represents an application error with additional context
@@ -78,4 +79,30 @@ func Internal(message string, err error) *AppError {
 		Message: message,
 		Err:     err,
 	}
+}
+
+func Conflict(message string) *AppError {
+	return &AppError{
+		Code:    "CONFLICT",
+		Message: message,
+		Err:     ErrConflict,
+	}
+}
+
+// Unauthorized creates an unauthorized error
+func Unauthorized(message string) *AppError {
+	return &AppError{
+		Code:    "UNAUTHORIZED",
+		Message: message,
+		Err:     ErrUnauthorized,
+	}
+}
+
+// IsNotFound checks if an error is a not found error
+func IsNotFound(err error) bool {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Code == "NOT_FOUND" || errors.Is(appErr.Err, ErrNotFound)
+	}
+	return errors.Is(err, ErrNotFound)
 }

@@ -3,26 +3,19 @@ package accounts
 import (
 	"context"
 
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
 	"github.com/pkg/errors"
 )
 
-// Delete deletes an account by ID
-func (i impl) Delete(ctx context.Context, id int64) error {
-	query := `DELETE FROM accounts WHERE id = $1`
+// Delete implements Repository.
+func (i impl) Delete(ctx context.Context, provider, providerAccountID string) error {
+	query := `
+		DELETE FROM accounts
+		WHERE provider = $1 AND "providerAccountId" = $2
+	`
 
-	result, err := i.db.ExecContext(ctx, query, id)
+	_, err := i.db.ExecContext(ctx, query, provider, providerAccountID)
 	if err != nil {
-		return errors.Wrap(err, "failed to delete user")
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return errors.Wrap(err, "failed to get rows affected")
-	}
-
-	if rowsAffected == 0 {
-		return apperrors.NotFound("account not found")
+		return errors.Wrap(err, "failed to delete account")
 	}
 
 	return nil

@@ -9,7 +9,10 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.11.1
 	github.com/pkg/errors v0.9.1
+	golang.org/x/oauth2 v0.35.0
 )
+
+require cloud.google.com/go/compute/metadata v0.3.0 // indirect
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
@@ -18,7 +21,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/leodido/go-urn v1.4.0 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/crypto v0.46.0
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 )

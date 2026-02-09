@@ -24,10 +24,24 @@ type DatabaseConfig struct {
 	MaxIdleConns int
 }
 
+// GoogleConfig represents the google oauth configuration
+type GoogleConfig struct {
+	ClientID     string `envconfig:"GOOGLE_CLIENT_ID" required:"true"`
+	ClientSecret string `envconfig:"GOOGLE_CLIENT_SECRET" required:"true"`
+	RedirectURL  string `envconfig:"GOOGLE_REDIRECT_URL" required:"true"`
+}
+
+// JWTConfig represents the jwt configuration
+type JWTConfig struct {
+	Secret string `envconfig:"JWT_SECRET" required:"true"`
+}
+
 // Config represents the application configuration
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Google   GoogleConfig
+	JWT      JWTConfig
 }
 
 // Load loads the configuration from environment variables
