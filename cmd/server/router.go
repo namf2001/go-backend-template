@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/namf2001/go-backend-template/config"
+	appMiddleware "github.com/namf2001/go-backend-template/internal/handler/middleware"
 	authhandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/auth"
 	usershandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/users"
 )
@@ -58,23 +60,28 @@ func (rtr router) public(r chi.Router) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+
+	r.Handle("/metrics", promhttp.Handler())
 }
 
 func (rtr router) apiV1(r chi.Router) {
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Route("/users", func(r chi.Router) {
-			r.Post("/", rtr.usersHandler.CreateUser)
-			r.Get("/", rtr.usersHandler.ListUsers)
-			r.Get("/{id}", rtr.usersHandler.GetUser)
-			r.Put("/{id}", rtr.usersHandler.UpdateUser)
-			r.Delete("/{id}", rtr.usersHandler.DeleteUser)
-		})
-
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/login", rtr.authHandler.Login)
 			r.Post("/register", rtr.authHandler.Register)
 			r.Get("/google/login", rtr.authHandler.GoogleLogin)
 			r.Get("/google/callback", rtr.authHandler.GoogleCallback)
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(appMiddleware.RequireAuth)
+			r.Route("/users", func(r chi.Router) {
+				r.Post("/", rtr.usersHandler.CreateUser)
+				r.Get("/", rtr.usersHandler.ListUsers)
+				r.Get("/{id}", rtr.usersHandler.GetUser)
+				r.Put("/{id}", rtr.usersHandler.UpdateUser)
+				r.Delete("/{id}", rtr.usersHandler.DeleteUser)
+			})
 		})
 	})
 }

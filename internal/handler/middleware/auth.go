@@ -16,31 +16,30 @@ type contextKey string
 const contextKeyUserID contextKey = "userID"
 
 // RequireAuth middleware verifies JWT token
-func RequireAuth() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				response.Error(w, errors.Wrap(apperrors.ErrUnauthorized, "missing authorization header"))
-				return
-			}
+// RequireAuth middleware verifies JWT token
+func RequireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			response.Error(w, errors.Wrap(apperrors.ErrUnauthorized, "missing authorization header"))
+			return
+		}
 
-			headerParts := strings.Split(authHeader, " ")
-			if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-				response.Error(w, errors.Wrap(apperrors.ErrUnauthorized, "invalid authorization header format"))
-				return
-			}
+		headerParts := strings.Split(authHeader, " ")
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+			response.Error(w, errors.Wrap(apperrors.ErrUnauthorized, "invalid authorization header format"))
+			return
+		}
 
-			tokenString := headerParts[1]
-			claims, err := jwt.ParseToken(tokenString)
-			if err != nil {
-				response.Error(w, errors.Wrap(apperrors.ErrUnauthorized, "invalid or expired token"))
-				return
-			}
+		tokenString := headerParts[1]
+		claims, err := jwt.ParseToken(tokenString)
+		if err != nil {
+			response.Error(w, errors.Wrap(apperrors.ErrUnauthorized, "invalid or expired token"))
+			return
+		}
 
-			// Add UserID to context
-			ctx := context.WithValue(r.Context(), contextKeyUserID, claims.UserID)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
+		// Add UserID to context
+		ctx := context.WithValue(r.Context(), contextKeyUserID, claims.UserID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
