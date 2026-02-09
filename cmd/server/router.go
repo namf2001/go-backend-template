@@ -5,14 +5,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/namf2001/go-backend-template/config"
+	_ "github.com/namf2001/go-backend-template/docs/swagger"
 	appMiddleware "github.com/namf2001/go-backend-template/internal/handler/middleware"
 	authhandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/auth"
 	usershandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/users"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // router defines the routes & handlers of the app
@@ -62,6 +64,11 @@ func (rtr router) public(r chi.Router) {
 	})
 
 	r.Handle("/metrics", promhttp.Handler())
+
+	// Swagger UI
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 }
 
 func (rtr router) apiV1(r chi.Router) {

@@ -18,6 +18,16 @@ type CreateUserResponse struct {
 }
 
 // CreateUser handles the creation of a new user
+// @Summary      Create user
+// @Description  Create a new user account
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        input body users.CreateUserInput true "User info"
+// @Success      201  {object} users.CreateUserResponse
+// @Failure      400  {object} response.Response
+// @Failure      500  {object} response.Response
+// @Router       /users [post]
 func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var input users.CreateUserInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {

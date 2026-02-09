@@ -11,6 +11,17 @@ import (
 )
 
 // UpdateUser handles the updating of a user by ID
+// @Summary      Update user
+// @Description  Update user details
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id     path      int                    true  "User ID"
+// @Param        input  body      users.UpdateUserInput  true  "Update info"
+// @Success      204  {object} nil
+// @Failure      400  {object} response.Response
+// @Failure      500  {object} response.Response
+// @Router       /users/{id} [put]
 func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

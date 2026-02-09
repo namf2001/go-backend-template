@@ -18,6 +18,17 @@ type ListUsersResponse struct {
 }
 
 // ListUsers handles the listing of users with optional filters
+// @Summary      List users
+// @Description  Get a list of users
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        limit  query     int     false  "Limit"
+// @Param        offset query     int     false  "Offset"
+// @Param        email  query     string  false  "Email filter"
+// @Success      200  {object} users.ListUsersResponse
+// @Failure      500  {object} response.Response
+// @Router       /users [get]
 func (h Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	// Parse query parameters
 	limitStr := r.URL.Query().Get("limit")

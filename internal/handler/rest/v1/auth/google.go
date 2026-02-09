@@ -25,12 +25,28 @@ type GoogleUserInfo struct {
 }
 
 // GoogleLogin handles google login
+// @Summary      Google login
+// @Description  Get Google login URL
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object} map[string]string
+// @Router       /auth/google/login [get]
 func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	url := oauth.GoogleOauthConfig.AuthCodeURL(oauth.OauthStateString)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	response.Success(w, map[string]string{"url": url})
 }
 
 // GoogleCallback handles google callback
+// @Summary      Google callback
+// @Description  Handle Google OAuth callback and return token
+// @Tags         auth
+// @Produce      json
+// @Param        state query string true "OAuth state"
+// @Param        code  query string true "OAuth code"
+// @Success      200  {object} map[string]string
+// @Failure      400  {object} response.Response
+// @Failure      500  {object} response.Response
+// @Router       /auth/google/callback [get]
 func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	state := r.FormValue("state")
 	if state != oauth.OauthStateString {

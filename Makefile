@@ -71,6 +71,10 @@ generate: ## Generate code
 	@echo "Generating code..."
 	$(GO) generate ./...
 
+swagger: ## Generate Swagger documentation
+	@echo "Generating Swagger docs..."
+	swag init -g cmd/server/main.go -o docs/swagger || $(HOME)/go/bin/swag init -g cmd/server/main.go -o docs/swagger
+
 audit: fmt vet lint ## Run formatting, vetting, and linting
 
 docker-build: ## Build docker image

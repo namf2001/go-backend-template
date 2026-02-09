@@ -20,6 +20,17 @@ type LoginResponse struct {
 }
 
 // Login handles manual login
+// @Summary      User login
+// @Description  Authenticate user and return token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input body auth.LoginRequest true "Login credentials"
+// @Success      200  {object} auth.LoginResponse
+// @Failure      400  {object} response.Response
+// @Failure      401  {object} response.Response
+// @Failure      500  {object} response.Response
+// @Router       /auth/login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

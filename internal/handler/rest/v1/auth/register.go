@@ -21,6 +21,16 @@ type RegisterResponse struct {
 }
 
 // Register handles manual registration
+// @Summary      Register user
+// @Description  Register a new user account
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input body auth.RegisterRequest true "Registration info"
+// @Success      200  {object} auth.RegisterResponse
+// @Failure      400  {object} response.Response
+// @Failure      500  {object} response.Response
+// @Router       /auth/register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
