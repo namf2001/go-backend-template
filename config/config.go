@@ -1,58 +1,69 @@
 package config
 
 import (
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/joho/godotenv"
-	"github.com/kelseyhightower/envconfig"
-	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 )
 
-// ServerConfig represents the server configuration
-type ServerConfig struct {
-	Port string
-	Env  string
-}
+var c *viper.Viper
 
-// DatabaseConfig represents the database configuration
-type DatabaseConfig struct {
-	Host         string `envconfig:"DB_HOST" default:"localhost"`
-	Port         string `envconfig:"DB_PORT" default:"5432"`
-	User         string `envconfig:"DB_USER" default:"postgres"`
-	Password     string `envconfig:"DB_PASSWORD" default:"postgres"`
-	DBName       string `envconfig:"DB_NAME" default:"go_backend_db"`
-	SSLMode      string `envconfig:"DB_SSL_MODE" default:"disable"`
-	MaxOpenConns int
-	MaxIdleConns int
-}
-
-// GoogleConfig represents the google oauth configuration
-type GoogleConfig struct {
-	ClientID     string `envconfig:"GOOGLE_CLIENT_ID" required:"true"`
-	ClientSecret string `envconfig:"GOOGLE_CLIENT_SECRET" required:"true"`
-	RedirectURL  string `envconfig:"GOOGLE_REDIRECT_URL" required:"true"`
-}
-
-// JWTConfig represents the jwt configuration
-type JWTConfig struct {
-	Secret string `envconfig:"JWT_SECRET" required:"true"`
-}
-
-// Config represents the application configuration
-type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Google   GoogleConfig
-	JWT      JWTConfig
-}
-
-// Load loads the configuration from environment variables
-func Load() (*Config, error) {
-	// Load .env file if exists
-	_ = godotenv.Load()
-
-	var cfg Config
-	err := envconfig.Process("", &cfg)
+// findProjectRoot walks up from CWD to find the directory containing go.mod
+func findProjectRoot() string {
+	wd, err := os.Getwd()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to process config")
+		return "."
 	}
-	return &cfg, nil
+	cur := wd
+	for {
+		if _, err := os.Stat(filepath.Join(cur, "go.mod")); err == nil {
+			return cur
+		}
+		parent := filepath.Dir(cur)
+		if parent == cur {
+			// Reached filesystem root
+			return wd
+		}
+		cur = parent
+	}
+}
+
+// Init initializes config
+func Init(env string) {
+	c = viper.New()
+	c.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	c.AutomaticEnv()
+
+	// Defaults
+	c.SetDefault("APP_PORT", "8080")
+	c.SetDefault("APP_ENV", "dev")
+	c.SetDefault("APP_DEBUG", true)
+	c.SetDefault("APP_TIMEZONE", "Asia/Ho_Chi_Minh")
+
+	root := findProjectRoot()
+
+	// Load base .env (optional) from project root
+	_ = godotenv.Load(filepath.Join(root, ".env"))
+
+	// Load env-specific file from project root (optional)
+	envFile := filepath.Join(root, fmt.Sprintf(".env.%s", env))
+	if _, err := os.Stat(envFile); err == nil {
+		if err := godotenv.Overload(envFile); err != nil {
+			log.Printf("warning: could not load env file %s: %v", envFile, err)
+		}
+	} else if os.IsNotExist(err) {
+		log.Printf("warning: env file %s not found; relying on environment variables", envFile)
+	} else {
+		log.Printf("warning: cannot stat env file %s: %v", envFile, err)
+	}
+}
+
+// GetConfig returns config
+func GetConfig() *viper.Viper {
+	return c
 }

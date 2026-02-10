@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
@@ -39,33 +40,46 @@ func Error(w http.ResponseWriter, err error) {
 	var statusCode int
 	var errorInfo ErrorInfo
 
-	if errors, ok := err.(*apperrors.AppError); ok {
-		appErr = errors
+	if errors.As(err, &appErr) {
 		errorInfo = ErrorInfo{
 			Code:    appErr.Code,
 			Message: appErr.Message,
 		}
-
-		// Map error types to HTTP status codes
-		switch appErr.Code {
-		case "NOT_FOUND":
+		statusCode = mapCodeToStatus(appErr.Code)
+	} else {
+		// Handle sentinel errors
+		var code string
+		if errors.Is(err, apperrors.ErrNotFound) {
+			code = "NOT_FOUND"
 			statusCode = http.StatusNotFound
-		case "ALREADY_EXISTS":
+		} else if errors.Is(err, apperrors.ErrAlreadyExists) {
+			code = "ALREADY_EXISTS"
 			statusCode = http.StatusConflict
-		case "INVALID_INPUT":
+		} else if errors.Is(err, apperrors.ErrInvalidInput) {
+			code = "INVALID_INPUT"
 			statusCode = http.StatusBadRequest
-		case "UNAUTHORIZED":
+		} else if errors.Is(err, apperrors.ErrUnauthorized) {
+			code = "UNAUTHORIZED"
 			statusCode = http.StatusUnauthorized
-		case "FORBIDDEN":
+		} else if errors.Is(err, apperrors.ErrForbidden) {
+			code = "FORBIDDEN"
 			statusCode = http.StatusForbidden
-		default:
+		} else if errors.Is(err, apperrors.ErrConflict) {
+			code = "CONFLICT"
+			statusCode = http.StatusConflict
+		} else {
+			code = "INTERNAL_ERROR"
 			statusCode = http.StatusInternalServerError
 		}
-	} else {
-		statusCode = http.StatusInternalServerError
+
+		msg := err.Error()
+		if statusCode == http.StatusInternalServerError {
+			msg = "An unexpected error occurred"
+		}
+
 		errorInfo = ErrorInfo{
-			Code:    "INTERNAL_ERROR",
-			Message: "An unexpected error occurred",
+			Code:    code,
+			Message: msg,
 		}
 	}
 
@@ -78,6 +92,25 @@ func Error(w http.ResponseWriter, err error) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+func mapCodeToStatus(code string) int {
+	switch code {
+	case "NOT_FOUND":
+		return http.StatusNotFound
+	case "ALREADY_EXISTS":
+		return http.StatusConflict
+	case "INVALID_INPUT":
+		return http.StatusBadRequest
+	case "UNAUTHORIZED":
+		return http.StatusUnauthorized
+	case "FORBIDDEN":
+		return http.StatusForbidden
+	case "CONFLICT":
+		return http.StatusConflict
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 // Success sends a success response

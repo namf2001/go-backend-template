@@ -36,3 +36,6 @@ Thumbs.db
 .agents/
 
 docs/phases/*.md
+
+.env.dev
+.env.product

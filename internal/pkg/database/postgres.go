@@ -6,25 +6,15 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/namf2001/go-backend-template/config"
 	"github.com/pkg/errors"
 )
-
-type Config struct {
-	Host         string
-	Port         string
-	User         string
-	Password     string
-	DBName       string
-	SSLMode      string
-	MaxOpenConns int
-	MaxIdleConns int
-}
-
 // NewPostgresConnection creates a new PostgreSQL connection
-func NewPostgresConnection(cfg Config) (*sql.DB, error) {
+func NewPostgresConnection() (*sql.DB, error) {
+	cfg := config.GetConfig()
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode,
+		cfg.GetString("DB_HOST"), cfg.GetString("DB_PORT"), cfg.GetString("DB_USER"), cfg.GetString("DB_PASSWORD"), cfg.GetString("DB_NAME"), cfg.GetString("DB_SSL_MODE"),
 	)
 
 	db, err := sql.Open("postgres", dsn)
@@ -33,8 +23,8 @@ func NewPostgresConnection(cfg Config) (*sql.DB, error) {
 	}
 
 	// Set connection pool settings
-	db.SetMaxOpenConns(cfg.MaxOpenConns)
-	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetMaxOpenConns(cfg.GetInt("DB_MAX_OPEN_CONNS"))
+	db.SetMaxIdleConns(cfg.GetInt("DB_MAX_IDLE_CONNS"))
 	db.SetConnMaxLifetime(time.Hour)
 
 	// Verify connection

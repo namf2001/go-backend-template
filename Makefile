@@ -26,6 +26,15 @@ run: ## Run the application
 run-race: ## Run the application with race detector
 	@go run -race ./cmd/server
 
+dev: ## Run the application with Air for live reload (dev env)
+	@APP_ENV=dev air -c .air.toml || $(HOME)/go/bin/air -c .air.toml
+
+run-dev: ## Run the application (dev env)
+	@APP_ENV=dev go run ./cmd/server
+
+run-product: ## Run the application (product env)
+	@APP_ENV=product go run ./cmd/server
+
 clean: ## Clean build artifacts
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)

@@ -12,11 +12,12 @@ var (
 	Scopes            = []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"}
 )
 
-func Init(cfg config.GoogleConfig) {
+func Init() {
+	cfg := config.GetConfig()
 	GoogleOauthConfig = &oauth2.Config{
-		RedirectURL:  cfg.RedirectURL,
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
+		RedirectURL:  cfg.GetString("GOOGLE_REDIRECT_URL"),
+		ClientID:     cfg.GetString("GOOGLE_CLIENT_ID"),
+		ClientSecret: cfg.GetString("GOOGLE_CLIENT_SECRET"),
 		Scopes:       Scopes,
 		Endpoint:     google.Endpoint,
 	}

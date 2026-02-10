@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	authhandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/auth"
 	usershandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/users"
 	"github.com/namf2001/go-backend-template/internal/pkg/database"
-	"github.com/namf2001/go-backend-template/internal/pkg/jwt"
 	"github.com/namf2001/go-backend-template/internal/pkg/oauth"
 	"github.com/namf2001/go-backend-template/internal/repository"
 )
@@ -42,31 +42,30 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// Load configuration
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+	// Parse command line flags for environment; allow APP_ENV fallback
+	envFlag := flag.String("e", "", "Environment to run (development, staging, production)")
+	flag.Parse()
+
+	env := *envFlag
+	if env == "" {
+		env = os.Getenv("APP_ENV")
+		if env == "" {
+			env = "dev"
+		}
 	}
 
-	if err := run(ctx, cfg); err != nil {
+	log.Printf("Initializing config for environment: %s", env)
+	config.Init(env)
+
+	if err := run(ctx); err != nil {
 		log.Fatalf("Application error: %v", err)
 	}
 }
 
-func run(ctx context.Context, cfg *config.Config) error {
-	// Connect to database
-	dbCfg := database.Config{
-		Host:         cfg.Database.Host,
-		Port:         cfg.Database.Port,
-		User:         cfg.Database.User,
-		Password:     cfg.Database.Password,
-		DBName:       cfg.Database.DBName,
-		SSLMode:      cfg.Database.SSLMode,
-		MaxOpenConns: cfg.Database.MaxOpenConns,
-		MaxIdleConns: cfg.Database.MaxIdleConns,
-	}
+func run(ctx context.Context) error {
+	cfg := config.GetConfig()
 
-	db, err := database.NewPostgresConnection(dbCfg)
+	db, err := database.NewPostgresConnection()
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -75,10 +74,7 @@ func run(ctx context.Context, cfg *config.Config) error {
 	log.Println("✓ Database connected successfully")
 
 	// Initialize OAuth
-	oauth.Init(cfg.Google)
-
-	// Initialize JWT
-	jwt.Init(cfg.JWT.Secret, 24*time.Hour)
+	oauth.Init()
 
 	// Initialize repository
 	repo := repository.New(db)
@@ -94,13 +90,12 @@ func run(ctx context.Context, cfg *config.Config) error {
 	// Setup router
 	rtr := router{
 		ctx:          ctx,
-		cfg:          cfg,
 		usersHandler: usersHandler,
 		authHandler:  authHandler,
 	}
 
 	// Start server
-	addr := fmt.Sprintf(":%s", cfg.Server.Port)
+	addr := fmt.Sprintf(":%s", cfg.GetString("APP_PORT"))
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      rtr.handler(),
@@ -109,9 +104,10 @@ func run(ctx context.Context, cfg *config.Config) error {
 	}
 
 	log.Printf("🚀 Server starting on %s", addr)
-	log.Printf("📝 Environment: %s", cfg.Server.Env)
+	log.Printf("📝 Environment: %s", cfg.GetString("APP_ENV"))
 	log.Printf("🔗 Health check: http://localhost%s/health", addr)
-	log.Printf("🔗 API base URL: http://localhost%s/api/v1/users", addr)
+	log.Printf("🔗 API Swagger URL: http://localhost%s/swagger/index.html", addr)
+	log.Printf("🔗 API Metrics URL: http://localhost%s/metrics", addr)
 
 	// Graceful shutdown channel
 	done := make(chan os.Signal, 1)

@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/namf2001/go-backend-template/config"
 	_ "github.com/namf2001/go-backend-template/docs/swagger"
 	appMiddleware "github.com/namf2001/go-backend-template/internal/handler/middleware"
 	authhandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/auth"
@@ -20,7 +19,6 @@ import (
 // router defines the routes & handlers of the app
 type router struct {
 	ctx          context.Context
-	cfg          *config.Config
 	usersHandler *usershandler.Handler
 	authHandler  *authhandler.Handler
 }
