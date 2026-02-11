@@ -72,7 +72,7 @@ func (i impl) OAuthLogin(ctx context.Context, input OAuthInput) (string, error) 
 	newAccount := model.Account{
 		UserID:            user.ID,
 		Type:              input.Type,
-		Provider:          input.Provider,
+		Provider:          model.Provider(input.Provider),
 		ProviderAccountID: input.ProviderAccountID,
 		RefreshToken:      input.RefreshToken,
 		AccessToken:       input.AccessToken,

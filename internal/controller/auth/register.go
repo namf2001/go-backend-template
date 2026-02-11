@@ -6,6 +6,7 @@ import (
 	"github.com/namf2001/go-backend-template/internal/model"
 	"github.com/namf2001/go-backend-template/internal/pkg/jwt"
 	"github.com/namf2001/go-backend-template/internal/pkg/utils"
+	"github.com/namf2001/go-backend-template/internal/repository"
 )
 
 type RegisterInput struct {
@@ -22,14 +23,27 @@ func (i impl) Register(ctx context.Context, input RegisterInput) (string, error)
 		return "", err
 	}
 
-	// 2. Create user
+	// 2. Create user + account in a single transaction
 	user := model.User{
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: hashedPassword,
 	}
 
-	createdUser, err := i.repo.User().Create(ctx, user)
+	var createdUser model.User // declare outside closure to use after tx
+	err = i.repo.DoInTx(ctx, func(ctx context.Context, txRepo repository.Registry) error {
+		var txErr error
+		createdUser, txErr = txRepo.User().Create(ctx, user)
+		if txErr != nil {
+			return txErr
+		}
+
+		_, txErr = txRepo.Account().Create(ctx, model.Account{
+			UserID: createdUser.ID,
+			Type:   "personal",
+		})
+		return txErr
+	}, nil)
 	if err != nil {
 		return "", err
 	}
