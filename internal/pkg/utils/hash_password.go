@@ -1,6 +1,9 @@
 package utils
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
+	pkgerrors "github.com/pkg/errors"
+)
 
 const defaultCost = 10
 
@@ -8,12 +11,16 @@ const defaultCost = 10
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), defaultCost)
 	if err != nil {
-		return "", err
+		return "", pkgerrors.WithStack(err)
 	}
 	return string(hashedPassword), nil
 }
 
 // VerifyPassword verifies a password against a hashed password
 func VerifyPassword(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		return pkgerrors.WithStack(err)
+	}
+	return nil
 }

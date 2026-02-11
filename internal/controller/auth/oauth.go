@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
 	"github.com/namf2001/go-backend-template/internal/pkg/jwt"
 )
 
@@ -45,27 +44,22 @@ func (i impl) OAuthLogin(ctx context.Context, input OAuthInput) (string, error) 
 	// 2. Check if user exists by email
 	user, err := i.repo.User().GetByEmail(ctx, input.Email)
 	if err != nil {
-		// User does not exist, create user
-		// Note: We might want cleaner error checking for NotFound vs other errors
-		if !apperrors.IsNotFound(err) {
-			// If error is NOT "not found", return it (ignore for now assuming it's not found)
-			// But actually GetByEmail returns not found.
-		}
+		return "", err	
+	}
 
-		newUser := model.User{
-			Name:  input.Name,
-			Email: input.Email,
-			Image: input.Image,
-		}
-		if input.EmailVerified {
-			now := time.Now()
-			newUser.EmailVerified = &now
-		}
+	newUser := model.User{
+		Name:  input.Name,
+		Email: input.Email,
+		Image: input.Image,
+	}
+	if input.EmailVerified {
+		now := time.Now()
+		newUser.EmailVerified = &now
+	}
 
-		user, err = i.repo.User().Create(ctx, newUser)
-		if err != nil {
-			return "", err
-		}
+	user, err = i.repo.User().Create(ctx, newUser)
+	if err != nil {
+		return "", err
 	}
 
 	// 3. Link account to user

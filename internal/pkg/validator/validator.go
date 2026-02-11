@@ -2,6 +2,7 @@ package validator
 
 import (
 	"github.com/go-playground/validator/v10"
+	pkgerrors "github.com/pkg/errors"
 )
 
 var validate *validator.Validate
@@ -12,7 +13,10 @@ func init() {
 
 // Validate validates a struct
 func Validate(data interface{}) error {
-	return validate.Struct(data)
+	if err := validate.Struct(data); err != nil {
+		return pkgerrors.WithStack(err)
+	}
+	return nil
 }
 
 // ValidationErrors converts validator errors to readable format

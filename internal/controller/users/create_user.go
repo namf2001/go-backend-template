@@ -4,9 +4,8 @@ import (
 	"context"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
 	"github.com/namf2001/go-backend-template/internal/pkg/validator"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // CreateUserInput represents input for creating a user
@@ -20,13 +19,13 @@ func (i impl) CreateUser(ctx context.Context, input CreateUserInput) (model.User
 	var UserOutput model.User
 	// Validate input
 	if err := validator.Validate(input); err != nil {
-		return UserOutput, apperrors.InvalidInput("validation failed")
+		return UserOutput, err
 	}
 
 	// Check if a user already exists
 	_, err := i.repo.User().GetByEmail(ctx, input.Email)
 	if err == nil {
-		return UserOutput, apperrors.AlreadyExists("user with this email already exists")
+		return UserOutput, pkgerrors.WithStack(ErrUserExited)
 	}
 
 	// Create user
@@ -37,7 +36,7 @@ func (i impl) CreateUser(ctx context.Context, input CreateUserInput) (model.User
 
 	created, err := i.repo.User().Create(ctx, user)
 	if err != nil {
-		return UserOutput, errors.Wrap(err, "failed to create user")
+		return UserOutput, pkgerrors.WithStack(err)
 	}
 
 	return created, nil

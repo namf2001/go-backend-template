@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/namf2001/go-backend-template/config"
+	pkgerrors "github.com/pkg/errors"
 )
 
 type Claims struct {
@@ -33,7 +34,11 @@ func GenerateToken(userID int64, email string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secretKey))
+	tokenString, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return "", pkgerrors.WithStack(err)
+	}
+	return tokenString, nil
 }
 
 // ParseToken parses and validates a JWT token
@@ -47,12 +52,12 @@ func ParseToken(tokenString string) (*Claims, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.WithStack(err)
 	}
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}
 
-	return nil, fmt.Errorf("invalid token")
+	return nil, pkgerrors.WithStack(ErrInvalidToken)
 }

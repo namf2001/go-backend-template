@@ -5,9 +5,10 @@ import (
 
 	"github.com/namf2001/go-backend-template/internal/model"
 	"github.com/namf2001/go-backend-template/internal/repository/users"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
+// ListFilters represents input for listing users
 type ListFilters struct {
 	Limit  int
 	Offset int
@@ -24,12 +25,12 @@ func (i impl) ListUsers(ctx context.Context, filters ListFilters) ([]model.User,
 
 	userList, err := i.repo.User().List(ctx, repoFilters)
 	if err != nil {
-		return []model.User{}, 0, errors.Wrap(err, "failed to list users")
+		return []model.User{}, 0, pkgerrors.WithStack(err)
 	}
 
 	totalUser, err := i.repo.User().CountUser(ctx)
 	if err != nil {
-		return []model.User{}, 0, errors.Wrap(err, "failed to count users")
+		return []model.User{}, 0, pkgerrors.WithStack(err)
 	}
 
 	return userList, totalUser, nil

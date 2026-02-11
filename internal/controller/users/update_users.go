@@ -3,9 +3,8 @@ package users
 import (
 	"context"
 
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
 	"github.com/namf2001/go-backend-template/internal/pkg/validator"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // UpdateUserInput represents input for updating a user
@@ -18,13 +17,13 @@ type UpdateUserInput struct {
 func (i impl) UpdateUser(ctx context.Context, id int64, input UpdateUserInput) error {
 	// Validate input
 	if err := validator.Validate(input); err != nil {
-		return apperrors.InvalidInput("validation failed")
+		return pkgerrors.WithStack(err)	
 	}
 
 	// Get existing user
 	user, err := i.repo.User().GetByID(ctx, id)
 	if err != nil {
-		return err
+		return pkgerrors.WithStack(err)
 	}
 
 	// Update fields
@@ -37,7 +36,7 @@ func (i impl) UpdateUser(ctx context.Context, id int64, input UpdateUserInput) e
 
 	// Save changes
 	if err := i.repo.User().Update(ctx, user); err != nil {
-		return errors.Wrap(err, "failed to update user")
+		return pkgerrors.WithStack(err)
 	}
 
 	return nil

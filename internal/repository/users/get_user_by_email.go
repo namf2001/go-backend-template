@@ -29,7 +29,7 @@ func (i impl) GetByEmail(ctx context.Context, email string) (model.User, error) 
 	)
 
 	if err == sql.ErrNoRows {
-		return model.User{}, pkgerrors.WithStack(ErrNotFound)
+		return model.User{}, nil
 	}
 
 	if err != nil {
