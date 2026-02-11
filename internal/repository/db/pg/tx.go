@@ -3,10 +3,10 @@ package pg
 import (
 	"context"
 	"database/sql"
-	"log"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/namf2001/go-backend-template/internal/pkg/logger"
 	pkgerrors "github.com/pkg/errors"
 )
 
@@ -58,7 +58,7 @@ func beginTx(ctx context.Context, dbconn BeginnerExecutor, b backoff.BackOff) (*
 		tryCount++
 		var err error
 
-		log.Printf("DB: BeginTx Attempt: %d", tryCount)
+		logger.INFO.Printf("DB: BeginTx Attempt: %d", tryCount)
 		tx, err = dbconn.BeginTx(ctx, nil)
 
 		return pkgerrors.WithStack(err)

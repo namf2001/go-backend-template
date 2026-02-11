@@ -4,16 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/namf2001/go-backend-template/internal/pkg/logger"
 	pkgerrors "github.com/pkg/errors"
 )
 
 // NewPool opens a new DB connection pool, pings it and returns a BeginnerExecutor
 func NewPool(dsn string, maxOpenConns int, maxIdleConns int) (BeginnerExecutor, error) {
-	log.Println("Initializing Postgres connection pool...")
+	logger.INFO.Printf("Initializing Postgres connection pool...")
 
 	pool, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -29,7 +29,7 @@ func NewPool(dsn string, maxOpenConns int, maxIdleConns int) (BeginnerExecutor, 
 		return nil, pkgerrors.WithStack(fmt.Errorf("unable to ping DB: %w", err))
 	}
 
-	log.Println("Postgres connection pool initialized successfully")
+	logger.INFO.Printf("Postgres connection pool initialized successfully")
 
 	return pool, nil
 }

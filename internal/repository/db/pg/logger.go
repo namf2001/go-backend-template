@@ -2,8 +2,9 @@ package pg
 
 import (
 	"context"
-	"log"
 	"time"
+
+	"github.com/namf2001/go-backend-template/internal/pkg/logger"
 )
 
 type ctxKey string
@@ -19,8 +20,8 @@ type traceData struct {
 // Use this in repository methods for debugging purposes.
 func LogQuery(ctx context.Context, operation string, query string) func() {
 	start := time.Now()
-	log.Printf("DB %s START: %s", operation, query)
+	logger.DEBUG.Printf("DB %s START: %s", operation, query)
 	return func() {
-		log.Printf("DB %s END: %s (took %dms)", operation, query, time.Since(start).Milliseconds())
+		logger.DEBUG.Printf("DB %s END: %s (took %dms)", operation, query, time.Since(start).Milliseconds())
 	}
 }
