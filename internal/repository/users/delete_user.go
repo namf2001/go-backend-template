@@ -3,8 +3,7 @@ package users
 import (
 	"context"
 
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // Delete deletes a user by ID.
@@ -13,16 +12,16 @@ func (i impl) Delete(ctx context.Context, id int64) error {
 
 	result, err := i.db.ExecContext(ctx, query, id)
 	if err != nil {
-		return errors.Wrap(err, "failed to delete user")
+		return pkgerrors.WithStack(err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return errors.Wrap(err, "failed to get rows affected")
+		return pkgerrors.WithStack(err)
 	}
 
 	if rowsAffected == 0 {
-		return apperrors.NotFound("user not found")
+		return pkgerrors.WithStack(ErrNotFound)
 	}
 
 	return nil

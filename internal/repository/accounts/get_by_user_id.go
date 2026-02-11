@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // GetByUserID implements Repository.
@@ -17,7 +17,7 @@ func (i impl) GetByUserID(ctx context.Context, userID int64) ([]model.Account, e
 
 	rows, err := i.db.QueryContext(ctx, query, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get accounts by user id")
+		return nil, pkgerrors.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -38,7 +38,7 @@ func (i impl) GetByUserID(ctx context.Context, userID int64) ([]model.Account, e
 			&account.SessionState,
 			&account.TokenType,
 		); err != nil {
-			return nil, errors.Wrap(err, "failed to scan account")
+			return nil, pkgerrors.WithStack(err)
 		}
 		accounts = append(accounts, account)
 	}

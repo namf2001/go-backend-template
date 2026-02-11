@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // Create implements Repository.
@@ -44,7 +44,7 @@ func (i impl) Create(ctx context.Context, account model.Account) (model.Account,
 	)
 
 	if err != nil {
-		return model.Account{}, errors.Wrap(err, "failed to create account")
+		return model.Account{}, pkgerrors.WithStack(err)
 	}
 
 	return created, nil

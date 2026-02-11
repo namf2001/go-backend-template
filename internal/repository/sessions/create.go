@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // Create implements Repository.
@@ -24,7 +24,7 @@ func (i impl) Create(ctx context.Context, session model.Session) (model.Session,
 	)
 
 	if err != nil {
-		return model.Session{}, errors.Wrap(err, "failed to create session")
+		return model.Session{}, pkgerrors.WithStack(err)
 	}
 
 	return created, nil

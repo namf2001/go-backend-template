@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // Create implements Repository.
@@ -33,10 +32,10 @@ func (i impl) Create(ctx context.Context, user model.User) (model.User, error) {
 		if err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"" ||
 			err.Error() == "UNIQUE constraint failed" {
 
-			return model.User{}, apperrors.AlreadyExists("user with this email already exists")
+			return model.User{}, pkgerrors.WithStack(ErrAlreadyExists)
 		}
 
-		return model.User{}, errors.Wrap(err, "failed to create user")
+		return model.User{}, pkgerrors.WithStack(err)
 	}
 
 	return created, nil

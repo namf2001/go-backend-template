@@ -3,7 +3,7 @@ package accounts
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // Delete implements Repository.
@@ -15,7 +15,7 @@ func (i impl) Delete(ctx context.Context, provider, providerAccountID string) er
 
 	_, err := i.db.ExecContext(ctx, query, provider, providerAccountID)
 	if err != nil {
-		return errors.Wrap(err, "failed to delete account")
+		return pkgerrors.WithStack(err)
 	}
 
 	return nil

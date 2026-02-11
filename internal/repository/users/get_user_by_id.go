@@ -5,8 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // GetByID implements Repository.
@@ -30,10 +29,10 @@ func (i impl) GetByID(ctx context.Context, id int64) (model.User, error) {
 	)
 
 	if err == sql.ErrNoRows {
-		return model.User{}, apperrors.NotFound("user not found")
+		return model.User{}, pkgerrors.WithStack(ErrNotFound)
 	}
 	if err != nil {
-		return model.User{}, errors.Wrap(err, "failed to get user")
+		return model.User{}, pkgerrors.WithStack(err)
 	}
 
 	return user, nil

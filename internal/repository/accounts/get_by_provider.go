@@ -5,8 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/namf2001/go-backend-template/internal/model"
-	apperrors "github.com/namf2001/go-backend-template/internal/pkg/errors"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // GetByProvider implements Repository.
@@ -34,11 +33,11 @@ func (i impl) GetByProvider(ctx context.Context, provider, providerAccountID str
 	)
 
 	if err == sql.ErrNoRows {
-		return model.Account{}, apperrors.NotFound("account not found")
+		return model.Account{}, pkgerrors.WithStack(ErrNotFound)
 	}
 
 	if err != nil {
-		return model.Account{}, errors.Wrap(err, "failed to get account by provider")
+		return model.Account{}, pkgerrors.WithStack(err)
 	}
 
 	return account, nil

@@ -1,29 +1,63 @@
 package logger
 
 import (
+	"fmt"
+	"io"
+	"log"
 	"os"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-// New creates a new zap logger
-func New(env string) *zap.Logger {
-	var config zap.Config
+type ErrorType CustomLog
 
-	if env == "product" {
-		config = zap.NewProductionConfig()
-		config.EncoderConfig.TimeKey = "timestamp"
-		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	} else {
-		config = zap.NewDevelopmentConfig()
-		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	}
+var (
+	writer io.Writer = os.Stderr
+	DEBUG            = New(writer, "DEBUG: ", log.LstdFlags|log.Lshortfile)
+	INFO             = New(writer, "INFO: ", log.LstdFlags)
+	ERROR            = ErrorType(New(writer, "ERROR: ", log.LstdFlags|log.Lshortfile))
+)
 
-	logger, err := config.Build()
+type CustomLog struct {
+	Out    io.Writer
+	Prefix string
+	Flag   int
+}
+
+func New(out io.Writer, prefix string, flag int) CustomLog {
+	return CustomLog{Out: out, Prefix: prefix, Flag: flag}
+}
+
+func (cl *ErrorType) Printf(format string, v ...any) {
+	l := log.New(cl.Out, cl.Prefix, cl.Flag)
+	err := l.Output(2, fmt.Sprintf(format, v...))
 	if err != nil {
-		os.Exit(1)
+		fmt.Println(err)
+		return
 	}
+}
 
-	return logger
+func (cl *CustomLog) Printf(format string, v ...any) {
+	l := log.New(cl.Out, cl.Prefix, cl.Flag)
+	err := l.Output(2, fmt.Sprintf(format, v...))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func (cl *CustomLog) Print(v ...any) {
+	l := log.New(cl.Out, cl.Prefix, cl.Flag)
+	err := l.Output(2, fmt.Sprint(v))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func (cl *CustomLog) Println(v ...any) {
+	l := log.New(cl.Out, cl.Prefix, cl.Flag)
+	err := l.Output(2, fmt.Sprintln(v))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
