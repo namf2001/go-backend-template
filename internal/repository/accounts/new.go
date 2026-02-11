@@ -2,9 +2,9 @@ package accounts
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/namf2001/go-backend-template/internal/model"
+	"github.com/namf2001/go-backend-template/internal/repository/db/pg"
 )
 
 type Repository interface {
@@ -22,10 +22,10 @@ type Repository interface {
 }
 
 type impl struct {
-	db *sql.DB
+	db pg.ContextExecutor
 }
 
-func New(db *sql.DB) Repository {
+func New(db pg.ContextExecutor) Repository {
 	return impl{
 		db: db,
 	}
