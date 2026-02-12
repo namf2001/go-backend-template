@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	webErrInvalidID        = &httpserv.Error{Status: http.StatusBadRequest, Code: "invalid_id", Desc: "Invalid user ID"}
-	webErrInvalidBody      = &httpserv.Error{Status: http.StatusBadRequest, Code: "invalid_body", Desc: "Invalid request body"}
+	webErrInvalidID = &httpserv.Error{Status: http.StatusBadRequest, Code: "invalid_id", Desc: "Invalid user ID"}
+
 	webErrValidationFailed = &httpserv.Error{Status: http.StatusBadRequest, Code: "validation_failed", Desc: "Validation failed"}
 	webErrUserExists       = &httpserv.Error{Status: http.StatusConflict, Code: "user_exists", Desc: "User with this email already exists"}
 	webErrUserNotFound     = &httpserv.Error{Status: http.StatusNotFound, Code: "user_not_found", Desc: "User not found"}

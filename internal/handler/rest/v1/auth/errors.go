@@ -7,7 +7,6 @@ import (
 )
 
 var (
-	webErrInvalidBody        = &httpserv.Error{Status: http.StatusBadRequest, Code: "invalid_body", Desc: "Invalid request body"}
 	webErrValidationFailed   = &httpserv.Error{Status: http.StatusBadRequest, Code: "validation_failed", Desc: "Validation failed"}
 	webErrInvalidCredentials = &httpserv.Error{Status: http.StatusUnauthorized, Code: "invalid_credentials", Desc: "Invalid email or password"}
 	webErrInvalidOAuthState  = &httpserv.Error{Status: http.StatusBadRequest, Code: "invalid_oauth_state", Desc: "Invalid OAuth state"}
