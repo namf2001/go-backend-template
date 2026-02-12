@@ -1,6 +1,6 @@
 module github.com/namf2001/go-backend-template
 
-go 1.25.0
+go 1.24.0
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
