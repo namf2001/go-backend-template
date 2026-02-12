@@ -46,7 +46,7 @@ func (cl *CustomLog) Printf(format string, v ...any) {
 
 func (cl *CustomLog) Print(v ...any) {
 	l := log.New(cl.Out, cl.Prefix, cl.Flag)
-	err := l.Output(2, fmt.Sprint(v))
+	err := l.Output(2, fmt.Sprint(v...))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -55,7 +55,7 @@ func (cl *CustomLog) Print(v ...any) {
 
 func (cl *CustomLog) Println(v ...any) {
 	l := log.New(cl.Out, cl.Prefix, cl.Flag)
-	err := l.Output(2, fmt.Sprintln(v))
+	err := l.Output(2, fmt.Sprintln(v...))
 	if err != nil {
 		fmt.Println(err)
 		return
