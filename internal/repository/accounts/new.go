@@ -12,7 +12,7 @@ type Repository interface {
 	Create(ctx context.Context, account model.Account) (model.Account, error)
 
 	// GetByProvider retrieves an account by provider and provider account id
-	GetByProvider(ctx context.Context, provider, providerAccountID string) (model.Account, error)
+	GetByProvider(ctx context.Context, provider model.Provider, providerAccountID string) (model.Account, error)
 
 	// GetByUserID retrieves all accounts for a user
 	GetByUserID(ctx context.Context, userID int64) ([]model.Account, error)

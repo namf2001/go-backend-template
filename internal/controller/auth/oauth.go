@@ -10,7 +10,7 @@ import (
 
 // OAuthInput is the input for OAuth login
 type OAuthInput struct {
-	Provider          string
+	Provider          model.Provider
 	ProviderAccountID string
 	Type              string
 	AccessToken       string
@@ -29,36 +29,39 @@ type OAuthInput struct {
 
 // OAuthLogin handles oauth login/registration
 func (i impl) OAuthLogin(ctx context.Context, input OAuthInput) (string, error) {
-	// 1. Check if account exists
+	// 1. Check if account already linked
 	account, err := i.repo.Account().GetByProvider(ctx, input.Provider, input.ProviderAccountID)
 	if err == nil {
-		// Account exists, get user and login
+		// Account exists → get user and return token
 		user, err := i.repo.User().GetByID(ctx, account.UserID)
 		if err != nil {
 			return "", err
 		}
+
 		return jwt.GenerateToken(user.ID, user.Email)
 	}
 
-	// If account does not exist
-	// 2. Check if user exists by email
+	// 2. Account not linked yet → find or create user
 	user, err := i.repo.User().GetByEmail(ctx, input.Email)
-	if err != nil {
-		return "", err	
-	}
+	switch {
+	case err == ErrUserNotFound:
+		// User doesn't exist → create new user
+		newUser := model.User{
+			Name:  input.Name,
+			Email: input.Email,
+			Image: input.Image,
+		}
+		if input.EmailVerified {
+			now := time.Now()
+			newUser.EmailVerified = &now
+		}
 
-	newUser := model.User{
-		Name:  input.Name,
-		Email: input.Email,
-		Image: input.Image,
-	}
-	if input.EmailVerified {
-		now := time.Now()
-		newUser.EmailVerified = &now
-	}
-
-	user, err = i.repo.User().Create(ctx, newUser)
-	if err != nil {
+		user, err = i.repo.User().Create(ctx, newUser)
+		if err != nil {
+			return "", err
+		}
+	case err != nil:
+		// Unexpected error
 		return "", err
 	}
 
@@ -66,7 +69,7 @@ func (i impl) OAuthLogin(ctx context.Context, input OAuthInput) (string, error) 
 	newAccount := model.Account{
 		UserID:            user.ID,
 		Type:              input.Type,
-		Provider:          model.Provider(input.Provider),
+		Provider:          input.Provider,
 		ProviderAccountID: input.ProviderAccountID,
 		RefreshToken:      input.RefreshToken,
 		AccessToken:       input.AccessToken,
@@ -77,8 +80,7 @@ func (i impl) OAuthLogin(ctx context.Context, input OAuthInput) (string, error) 
 		TokenType:         input.TokenType,
 	}
 
-	_, err = i.repo.Account().Create(ctx, newAccount)
-	if err != nil {
+	if _, err = i.repo.Account().Create(ctx, newAccount); err != nil {
 		return "", err
 	}
 

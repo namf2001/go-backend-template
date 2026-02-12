@@ -9,7 +9,7 @@ import (
 )
 
 // GetByProvider implements Repository.
-func (i impl) GetByProvider(ctx context.Context, provider, providerAccountID string) (model.Account, error) {
+func (i impl) GetByProvider(ctx context.Context, provider model.Provider, providerAccountID string) (model.Account, error) {
 	query := `
 		SELECT id, "userId", type, provider, "providerAccountId", refresh_token, access_token, expires_at, id_token, scope, session_state, token_type
 		FROM accounts

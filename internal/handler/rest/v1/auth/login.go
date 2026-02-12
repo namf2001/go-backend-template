@@ -1,12 +1,10 @@
 package auth
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 
-	"github.com/namf2001/go-backend-template/internal/controller/auth"
-	"github.com/namf2001/go-backend-template/internal/pkg/response"
+	ctrlAuth "github.com/namf2001/go-backend-template/internal/controller/auth"
+	"github.com/namf2001/go-backend-template/internal/pkg/httpserv"
 	"github.com/namf2001/go-backend-template/internal/pkg/validator"
 )
 
@@ -27,33 +25,32 @@ type LoginResponse struct {
 // @Produce      json
 // @Param        input body auth.LoginRequest true "Login credentials"
 // @Success      200  {object} auth.LoginResponse
-// @Failure      400  {object} response.Response
-// @Failure      401  {object} response.Response
-// @Failure      500  {object} response.Response
+// @Failure      400  {object} httpserv.Error
+// @Failure      401  {object} httpserv.Error
+// @Failure      500  {object} httpserv.Error
 // @Router       /auth/login [post]
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, err)
-		return
-	}
+func (h *Handler) Login() http.HandlerFunc {
+	return httpserv.ErrHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {
+		var req LoginRequest
+		if err := httpserv.ParseJSON(r.Body, &req); err != nil {
+			return err
+		}
 
-	if err := validator.Validate(req); err != nil {
-		validationErrors := validator.ValidationErrors(err)
-		response.Error(w, fmt.Errorf("validation error: %v", validationErrors))
-		return
-	}
+		if err := validator.Validate(req); err != nil {
+			return webErrValidationFailed
+		}
 
-	input := auth.ValidationInput{
-		Email:    req.Email,
-		Password: req.Password,
-	}
+		input := ctrlAuth.ValidationInput{
+			Email:    req.Email,
+			Password: req.Password,
+		}
 
-	token, err := h.ctrl.Login(r.Context(), input)
-	if err != nil {
-		response.Error(w, err)
-		return
-	}
+		token, err := h.ctrl.Login(r.Context(), input)
+		if err != nil {
+			return webErrInvalidCredentials
+		}
 
-	response.Success(w, LoginResponse{Token: token})
+		httpserv.RespondJSON(r.Context(), w, LoginResponse{Token: token})
+		return nil
+	})
 }

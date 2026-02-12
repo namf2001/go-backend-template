@@ -4,10 +4,17 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/namf2001/go-backend-template/internal/controller/users"
+	ctrlUsers "github.com/namf2001/go-backend-template/internal/controller/users"
 	"github.com/namf2001/go-backend-template/internal/model"
-	"github.com/namf2001/go-backend-template/internal/pkg/response"
+	"github.com/namf2001/go-backend-template/internal/pkg/httpserv"
 )
+
+// ListUsersRequest represents the request for listing users
+type ListUsersRequest struct {
+	Limit  int    `json:"limit"`
+	Offset int    `json:"offset"`
+	Email  string `json:"email"`
+}
 
 // ListUsersResponse represents the response for listing users
 type ListUsersResponse struct {
@@ -27,44 +34,47 @@ type ListUsersResponse struct {
 // @Param        offset query     int     false  "Offset"
 // @Param        email  query     string  false  "Email filter"
 // @Success      200  {object} users.ListUsersResponse
-// @Failure      500  {object} response.Response
+// @Failure      500  {object} httpserv.Error
+// @Security     BearerAuth
 // @Router       /users [get]
-func (h Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	// Parse query parameters
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-	email := r.URL.Query().Get("email")
+func (h Handler) ListUsers() http.HandlerFunc {
+	return httpserv.ErrHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {
+		// Parse query parameters
+		limitStr := r.URL.Query().Get("limit")
+		offsetStr := r.URL.Query().Get("offset")
+		email := r.URL.Query().Get("email")
 
-	limit := 10 // default
-	if limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil {
-			limit = l
+		limit := 10 // default
+		if limitStr != "" {
+			if l, err := strconv.Atoi(limitStr); err == nil {
+				limit = l
+			}
 		}
-	}
 
-	offset := 0
-	if offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil {
-			offset = o
+		offset := 0
+		if offsetStr != "" {
+			if o, err := strconv.Atoi(offsetStr); err == nil {
+				offset = o
+			}
 		}
-	}
 
-	filters := users.ListFilters{
-		Limit:  limit,
-		Offset: offset,
-		Email:  email,
-	}
+		filters := ctrlUsers.ListFilters{
+			Limit:  limit,
+			Offset: offset,
+			Email:  email,
+		}
 
-	result, totalUser, err := h.userCtrl.ListUsers(r.Context(), filters)
-	if err != nil {
-		response.Error(w, err)
-		return
-	}
+		result, totalUser, err := h.userCtrl.ListUsers(r.Context(), filters)
+		if err != nil {
+			return convertError(err)
+		}
 
-	response.Success(w, ListUsersResponse{
-		Users:  result,
-		Total:  totalUser,
-		Limit:  limit,
-		Offset: offset,
+		httpserv.RespondJSON(r.Context(), w, ListUsersResponse{
+			Users:  result,
+			Total:  totalUser,
+			Limit:  limit,
+			Offset: offset,
+		})
+		return nil
 	})
 }

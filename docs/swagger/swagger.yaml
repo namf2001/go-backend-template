@@ -1,5 +1,15 @@
 basePath: /api/v1
 definitions:
+  auth.GoogleCallbackResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  auth.GoogleLoginResponse:
+    properties:
+      url:
+        type: string
+    type: object
   auth.LoginRequest:
     properties:
       email:
@@ -34,6 +44,17 @@ definitions:
       token:
         type: string
     type: object
+  httpserv.Error:
+    properties:
+      error:
+        description: Since there is existing dependency at infinity end, unable to
+          fix the json key name
+        type: string
+      error_description:
+        description: Since there is existing dependency at infinity end, unable to
+          fix the json key name
+        type: string
+    type: object
   model.User:
     properties:
       created_at:
@@ -51,22 +72,7 @@ definitions:
       updated_at:
         type: string
     type: object
-  response.ErrorInfo:
-    properties:
-      code:
-        type: string
-      message:
-        type: string
-    type: object
-  response.Response:
-    properties:
-      data: {}
-      error:
-        $ref: '#/definitions/response.ErrorInfo'
-      success:
-        type: boolean
-    type: object
-  users.CreateUserInput:
+  users.CreateUserRequest:
     properties:
       email:
         type: string
@@ -80,16 +86,13 @@ definitions:
     type: object
   users.CreateUserResponse:
     properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  users.GetUserResponse:
+    properties:
+      user:
+        $ref: '#/definitions/model.User'
     type: object
   users.ListUsersResponse:
     properties:
@@ -104,7 +107,7 @@ definitions:
           $ref: '#/definitions/model.User'
         type: array
     type: object
-  users.UpdateUserInput:
+  users.UpdateUserRequest:
     properties:
       email:
         type: string
@@ -147,17 +150,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/auth.GoogleCallbackResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
       summary: Google callback
       tags:
       - auth
@@ -170,9 +171,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/auth.GoogleLoginResponse'
       summary: Google login
       tags:
       - auth
@@ -198,15 +197,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
       summary: User login
       tags:
       - auth
@@ -232,11 +231,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
       summary: Register user
       tags:
       - auth
@@ -268,7 +267,9 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
+      security:
+      - BearerAuth: []
       summary: List users
       tags:
       - users
@@ -282,7 +283,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/users.CreateUserInput'
+          $ref: '#/definitions/users.CreateUserRequest'
       produces:
       - application/json
       responses:
@@ -293,11 +294,17 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/httpserv.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
+      security:
+      - BearerAuth: []
       summary: Create user
       tags:
       - users
@@ -320,11 +327,13 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
+      security:
+      - BearerAuth: []
       summary: Delete user
       tags:
       - users
@@ -344,19 +353,21 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.User'
+            $ref: '#/definitions/users.GetUserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
+      security:
+      - BearerAuth: []
       summary: Get user
       tags:
       - users
@@ -375,7 +386,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/users.UpdateUserInput'
+          $ref: '#/definitions/users.UpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -384,11 +395,13 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/httpserv.Error'
+      security:
+      - BearerAuth: []
       summary: Update user
       tags:
       - users

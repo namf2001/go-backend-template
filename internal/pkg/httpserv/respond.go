@@ -3,8 +3,9 @@ package httpserv
 import (
 	"context"
 	"encoding/json"
-	//"errors"
 	"net/http"
+
+	"github.com/namf2001/go-backend-template/internal/pkg/logger"
 )
 
 // Success is the response format when http handler succeeds
@@ -37,7 +38,7 @@ func RespondJSONWithHeaders(ctx context.Context, w http.ResponseWriter, obj inte
 		status = parsed.Status
 		if status == 0 {
 			status = http.StatusInternalServerError
-			// Log missing status error
+			logger.ERROR.Printf("[RespondJSON] got httpserv.Error without status")
 		}
 		respBytes, err = json.Marshal(parsed)
 	case error:
@@ -48,13 +49,13 @@ func RespondJSONWithHeaders(ctx context.Context, w http.ResponseWriter, obj inte
 	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		// Log marshal error
+		logger.ERROR.Printf("[RespondJSON] marshal failed: %v", err)
 		return
 	}
 
 	// Write response
 	w.WriteHeader(status)
 	if _, err = w.Write(respBytes); err != nil {
-		// Log write error
+		logger.ERROR.Printf("[RespondJSON] write failed: %v", err)
 	}
 }

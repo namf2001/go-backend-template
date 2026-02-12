@@ -19,7 +19,7 @@ type ListFilters struct {
 // List implements Repository.
 func (i impl) List(ctx context.Context, filters ListFilters) ([]model.User, error) {
 	query := `
-		SELECT id, email, name, created_at, updated_at
+		SELECT id, email, name, image, "emailVerified", created_at, updated_at
 		FROM users
 		WHERE 1=1
 	`
@@ -65,6 +65,8 @@ func (i impl) List(ctx context.Context, filters ListFilters) ([]model.User, erro
 			&user.ID,
 			&user.Email,
 			&user.Name,
+			&user.Image,
+			&user.EmailVerified,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
