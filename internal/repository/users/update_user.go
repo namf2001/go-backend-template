@@ -2,7 +2,9 @@ package users
 
 import (
 	"context"
+	"errors"
 
+	"github.com/lib/pq"
 	"github.com/namf2001/go-backend-template/internal/model"
 	pkgerrors "github.com/pkg/errors"
 )
@@ -21,8 +23,8 @@ func (i impl) Update(ctx context.Context, user model.User) error {
 
 	result, err := i.db.ExecContext(ctx, query, user.Email, user.Name, user.Password, user.Image, user.EmailVerified, user.ID)
 	if err != nil {
-		if err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"" ||
-			err.Error() == "UNIQUE constraint failed" {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			return pkgerrors.WithStack(ErrDuplicateEmail)
 		}
 		return pkgerrors.WithStack(err)
