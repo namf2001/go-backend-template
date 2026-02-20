@@ -1,0 +1,105 @@
+# {{.ProjectName}}
+
+A production-ready Go backend project scaffolded with [go-backend](https://github.com/namf2001/go-backend-template).
+
+## Features
+
+- 🏗️ Clean Architecture (Handler → Controller → Repository)
+- 🔧 Chi HTTP Router with middleware
+{{- if hasFeature "jwt"}}
+- 🔐 JWT Authentication
+{{- end}}
+{{- if hasFeature "oauth"}}
+- 🌐 Google OAuth2
+{{- end}}
+{{- if hasDB}}
+- 🗄️ {{.DBDriver | title}} Database with connection pooling
+- 📦 SQL Migrations
+{{- end}}
+{{- if hasFeature "swagger"}}
+- 📝 Swagger API Documentation
+{{- end}}
+{{- if hasFeature "prometheus"}}
+- 📊 Prometheus Metrics
+{{- end}}
+{{- if hasFeature "docker"}}
+- 🐳 Docker & Docker Compose
+{{- end}}
+{{- if hasFeature "cicd"}}
+- 🚀 GitHub Actions CI/CD
+{{- end}}
+- ♻️ Graceful Shutdown
+- 🔥 Air Hot-reload for development
+
+## Getting Started
+
+### Prerequisites
+
+- Go 1.24+
+{{- if hasDB}}
+- {{.DBDriver | title}}
+{{- end}}
+{{- if hasFeature "docker"}}
+- Docker & Docker Compose
+{{- end}}
+
+### Setup
+
+```bash
+# Copy environment file
+cp .env.example .env.dev
+{{if hasFeature "docker"}}
+# Start database
+docker-compose up -d
+{{end}}
+{{if hasDB}}
+# Run migrations
+make migrate-up
+{{end}}
+# Run development server
+make dev
+```
+
+## Project Structure
+
+```
+.
+├── cmd/server/          # Application entry point
+├── config/              # Configuration management
+├── internal/
+│   ├── controller/      # Business logic
+│   ├── handler/         # HTTP handlers & middleware
+│   ├── model/           # Domain models
+│   ├── pkg/             # Internal shared packages
+│   └── repository/      # Data access layer
+{{- if hasDB}}
+├── migrations/          # SQL migration files
+{{- end}}
+{{- if hasFeature "docker"}}
+├── Dockerfile
+├── docker-compose.yml
+{{- end}}
+├── Makefile
+└── .env.example
+```
+
+## Available Commands
+
+```bash
+make help              # Show all available commands
+make dev               # Run with Air hot-reload
+make build             # Build binary
+make test              # Run tests
+{{- if hasFeature "swagger"}}
+make swagger           # Generate Swagger docs
+{{- end}}
+{{- if hasFeature "docker"}}
+make docker-build      # Build Docker image
+make docker-up         # Start containers
+make docker-down       # Stop containers
+{{- end}}
+```
+
+## License
+
+MIT

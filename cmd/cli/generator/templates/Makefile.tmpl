@@ -1,5 +1,5 @@
 # Makefile
-.PHONY: all build build-all run run-race clean clear test test-coverage deps lint fmt vet generate audit docker-build docker-up docker-down migrate-up migrate-down help install-cli build-cli
+.PHONY: all build build-all run run-race clean clear test test-coverage deps lint fmt vet generate audit docker-build docker-up docker-down migrate-up migrate-down help
 
 # Variables
 BINARY_NAME=api
@@ -79,13 +79,13 @@ vet: ## Vet code
 generate: ## Generate code
 	@echo "Generating code..."
 	$(GO) generate ./...
-
+{{if hasFeature "swagger"}}
 swagger: ## Generate Swagger documentation
 	@echo "Generating Swagger docs..."
 	swag init -g cmd/server/main.go -o docs/swagger || $(HOME)/go/bin/swag init -g cmd/server/main.go -o docs/swagger
-
+{{end}}
 audit: fmt vet lint ## Run formatting, vetting, and linting
-
+{{if hasFeature "docker"}}
 docker-build: ## Build docker image
 	docker build -t $(BINARY_NAME):latest .
 
@@ -94,29 +94,21 @@ docker-up: ## Start the database
 
 docker-down: ## Stop the database
 	@docker-compose down
-
+{{end}}
+{{if hasDB}}
 migrate-up: ## Run database migrations
 	@echo "Running migrations..."
 	@for file in migrations/*.up.sql; do \
 		echo "Applying $$file..."; \
-		psql -h localhost -U postgres -d go_backend_db -f $$file; \
+		psql -h localhost -U postgres -d {{.ProjectName}}_db -f $$file; \
 	done
 
 migrate-down: ## Rollback database migrations
 	@echo "Rolling back migrations..."
 	@for file in migrations/*.down.sql; do \
 		echo "Rolling back $$file..."; \
-		psql -h localhost -U postgres -d go_backend_db -f $$file; \
+		psql -h localhost -U postgres -d {{.ProjectName}}_db -f $$file; \
 	done
-
-build-cli: ## Build CLI scaffolding tool
-	@echo "Building CLI..."
-	$(GO) build $(GOFLAGS) -o $(BUILD_DIR)/go-backend ./cmd/cli
-
-install-cli: ## Install CLI scaffolding tool globally
-	@echo "Installing go-backend CLI..."
-	$(GO) build -o $${GOPATH:-$$HOME/go}/bin/go-backend ./cmd/cli
-	@echo "Installed to $${GOPATH:-$$HOME/go}/bin/go-backend"
-
+{{end}}
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

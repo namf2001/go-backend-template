@@ -1,0 +1,92 @@
+package main
+
+import (
+	"context"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	_ "github.com/namf2001/go-backend-template/docs/swagger"
+	appMiddleware "github.com/namf2001/go-backend-template/internal/handler/middleware"
+	authhandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/auth"
+	usershandler "github.com/namf2001/go-backend-template/internal/handler/rest/v1/users"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+)
+
+// router defines the routes & handlers of the app
+type router struct {
+	ctx          context.Context
+	usersHandler *usershandler.Handler
+	authHandler  *authhandler.Handler
+}
+
+// handler returns the handler for use by the server
+func (rtr router) handler() http.Handler {
+	r := chi.NewRouter()
+
+	// Middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	// CORS
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
+	rtr.routes(r)
+
+	return r
+}
+
+func (rtr router) routes(r chi.Router) {
+	r.Group(rtr.public)
+	r.Group(rtr.apiV1)
+}
+
+func (rtr router) public(r chi.Router) {
+	// Health check
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+
+	r.Handle("/metrics", promhttp.Handler())
+
+	// Swagger UI
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
+}
+
+func (rtr router) apiV1(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/login", rtr.authHandler.Login())
+			r.Post("/register", rtr.authHandler.Register())
+			r.Get("/google/login", rtr.authHandler.GoogleLogin())
+			r.Get("/google/callback", rtr.authHandler.GoogleCallback())
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(appMiddleware.RequireAuth)
+			r.Route("/users", func(r chi.Router) {
+				r.Post("/", rtr.usersHandler.CreateUser())
+				r.Get("/", rtr.usersHandler.ListUsers())
+				r.Get("/{id}", rtr.usersHandler.GetUser())
+				r.Put("/{id}", rtr.usersHandler.UpdateUser())
+				r.Delete("/{id}", rtr.usersHandler.DeleteUser())
+			})
+		})
+	})
+}
